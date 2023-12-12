@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.applications.vgg19 import VGG19
+from tensorflow.keras.applications import InceptionV3
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg19 import preprocess_input
 from tensorflow.keras.utils import to_categorical
@@ -16,8 +16,8 @@ import random
 
 # Função para inicializar o modelo se não existir no estado da sessão
 def inicializar_modelo(st):
-    if 'modelo_vgg19' not in st.session_state:
-        st.session_state.modelo_vgg19 = VGG19(weights='imagenet')
+    if 'modelo_inceptionv3' not in st.session_state:
+        st.session_state.modelo_inceptionv3 = InceptionV3(weights='imagenet', include_top=False)
     if 'caminhos_completos' not in st.session_state:
         caminhos_pneumonia = [os.path.join('img/test/PNEUMONIA', arquivo) for arquivo in os.listdir('img/test/PNEUMONIA')]
         caminhos_normal = [os.path.join('img/test/NORMAL', arquivo) for arquivo in os.listdir('img/test/NORMAL')]
@@ -38,7 +38,7 @@ def explicacao_inceptionV3(st):
     radio_vgg = st.radio('',['Arquitetura','rede passo a passo','código','app'],horizontal=True)
     inicializar_modelo(st)
     # Carregar o modelo VGG19 pré-treinado
-    modelo_vgg19 = st.session_state.modelo_vgg19
+    modelo_vgg19 = st.session_state.modelo_inceptionv3
     if radio_vgg == 'Arquitetura':
         pass
         #st.image('img/img2.png')
@@ -139,7 +139,7 @@ accuracy = model.evaluate(x_test, y_test_one_hot)[1]
 print(f'Acurácia nos dados de teste: {accuracy * 100:.2f}%')
         ''')
         elif radio_vgg_cod == 'código completo':
-            sss = st.selectbox('selecione:',['Pre-processamento de imagens','VGG19'])
+            sss = st.selectbox('selecione:',['Pre-processamento de imagens','InceptionV3'])
             if sss == 'Pre-processamento de imagens':
                 st.markdown('''## Imagens ''')
                 st.code('''import numpy as np
@@ -186,24 +186,28 @@ print("Shape of y_train:", y_train.shape)
 print("Shape of y_test:", y_test.shape)
 
         ''')
-            if sss == 'VGG19':
+            if sss == 'InceptionV3':
                 st.markdown('''## Código''')
                 st.code('''import numpy as np
 import os
-from tensorflow.keras.applications import VGG19
+from tensorflow.keras.applications import InceptionV3
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.vgg19 import preprocess_input, decode_predictions
+from tensorflow.keras.applications.inception_v3 import preprocess_input, decode_predictions
 from tensorflow.keras.utils import to_categorical
-import numpy as np
+
+# Carregando os dados e dividindo em conjuntos de treino e teste (x_train, y_train, x_test, y_test)
+# Substitua isso com o seu próprio carregamento de dados
+
 num_classes = 2
-#VGG19 pré-treinado
-#VGG19 sem as camadas totalmente conectadas
-base_model = VGG19(weights='imagenet', include_top=False)
+
+# InceptionV3 pré-treinado
+base_model = InceptionV3(weights='imagenet', include_top=False)
+
 
 #camadas totalmente conectadas para a nova tarefa de classificação
 x = base_model.output
@@ -235,12 +239,12 @@ print(f'Acurácia nos dados de teste: {accuracy * 100:.2f}%')
         elif radio_vgg_cod == 'resultados':
             
             # Calcular métricas
-            accuracy = 0.92
-            precision = 0.93
+            accuracy = 0.9465
+            precision = 0.99
             recall = 0.93
-            f1 = 0.93
-            conf_matrix = [[47 , 5],
-            [ 5, 68]]
+            f1 = 0.96
+            conf_matrix = [[187,   4],
+                            [ 31, 432]]
             #st.write(conf_matrix)
 
             # Exibir métricas
@@ -260,8 +264,9 @@ print(f'Acurácia nos dados de teste: {accuracy * 100:.2f}%')
 
             # Fechar a figura para liberar recursos
             plt.close()
+    
     elif radio_vgg == 'app':
-        model = load_model('modelos/treinados/modelo_1_VGG19_10_epocas_92cc.h5', compile=False)
+        model = load_model('modelos/treinados/modelo_1_InceptionV3_10_epocas_95-11cc_base_60.h5', compile=False)
         # Recriar o modelo com otimizador customizado sem 'weight_decay'
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
         model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -280,6 +285,16 @@ print(f'Acurácia nos dados de teste: {accuracy * 100:.2f}%')
             st.error(valores[1], icon="🚨")#img_array[0].shape)
         elif y_pred_class == 0:
             st.success(valores[0], icon="✅")#img_array[0].shape)
+        # Redimensionar a exibição da imagem
+        plt.figure(figsize=(2, 2))
+
+        # Exibir a saída como uma imagem usando matplotlib
+        plt.imshow(img, cmap='viridis')
+        plt.title(valores[y_pred_class])
+        plt.axis('off')
+
+        # Exibir a figura usando Streamlit
+        st.pyplot(plt)
 
 
 

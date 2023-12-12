@@ -268,12 +268,22 @@ print(f'Acurácia nos dados de teste: {accuracy * 100:.2f}%')
         img_array = preprocess_input(img_array)
         y_pred = model.predict(np.array([img_array[0]]))
         y_pred_class = np.argmax(y_pred)
-        valores = ['É uma imagem que NORMAL','É uma imagem que contém Pneumonia']
+        valores = ['É uma imagem NORMAL','É uma imagem que contém Pneumonia']
         st.write(y_pred_class)
         if y_pred_class == 1:
             st.error(valores[1], icon="🚨")#img_array[0].shape)
         elif y_pred_class == 0:
             st.success(valores[0], icon="✅")#img_array[0].shape)
+        # Redimensionar a exibição da imagem
+        plt.figure(figsize=(2, 2))
+
+        # Exibir a saída como uma imagem usando matplotlib
+        plt.imshow(img, cmap='viridis')
+        plt.title(valores[y_pred_class])
+        plt.axis('off')
+
+        # Exibir a figura usando Streamlit
+        st.pyplot(plt)
 
 
 
